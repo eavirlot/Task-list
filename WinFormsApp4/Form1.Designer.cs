@@ -146,27 +146,27 @@
             this.label6.AutoSize = true;
             this.label6.Location = new System.Drawing.Point(383, 282);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(38, 15);
+            this.label6.Size = new System.Drawing.Size(117, 15);
             this.label6.TabIndex = 14;
-            this.label6.Text = "label6";
+            this.label6.Text = "Количество задач: 0";
             // 
             // label4
             // 
             this.label4.AutoSize = true;
             this.label4.Location = new System.Drawing.Point(86, 282);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(38, 15);
+            this.label4.Size = new System.Drawing.Size(117, 15);
             this.label4.TabIndex = 15;
-            this.label4.Text = "label4";
+            this.label4.Text = "Количество задач: 0";
             // 
             // label5
             // 
             this.label5.AutoSize = true;
             this.label5.Location = new System.Drawing.Point(241, 282);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(38, 15);
+            this.label5.Size = new System.Drawing.Size(117, 15);
             this.label5.TabIndex = 16;
-            this.label5.Text = "label5";
+            this.label5.Text = "Количество задач: 0";
             // 
             // Form1
             // 
@@ -186,7 +186,7 @@
             this.Controls.Add(this.listBox2);
             this.Controls.Add(this.listBox1);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "Задачник";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);
             this.PerformLayout();

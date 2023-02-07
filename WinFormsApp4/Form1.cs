@@ -1,3 +1,5 @@
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+
 namespace WinFormsApp4
 {
     public partial class Form1 : Form
@@ -116,6 +118,11 @@ namespace WinFormsApp4
         {
             // Запрос новой задачи от пользователя
             string newTask = Microsoft.VisualBasic.Interaction.InputBox("Введите имя новой задачи", "Добавить заачу", "");
+            if (string.IsNullOrEmpty(newTask))
+            {
+                MessageBox.Show("Не введено название задачи", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
             listBox1.Items.Add(newTask);
             string filename = Properties.Settings.Default.Username + "_todo.txt";
 
@@ -134,16 +141,19 @@ namespace WinFormsApp4
                 SaveList(listBox3, GetUserFileName(listBox3));
             }
         }
-
+       
+        // Обработка события нажатия мыши на элемент списка
         private void listBox1_MouseDown_1(object sender, MouseEventArgs e)
         {
+            // Получение индекса элемента в списке
             int index = listBox1.IndexFromPoint(e.X, e.Y);
+            // Если элемент выбран, происходит начало перетаскивания
             if (index != -1)
             {
                 Console.WriteLine("listBox1_MouseDown index ok");
-
+                // Получение выбранного элемента
                 string selectedItem = (string)listBox1.Items[index];
-              
+                // Начало перетаскивания
                 listBox1.DoDragDrop(selectedItem, DragDropEffects.Move);
             }
         }
@@ -170,8 +180,10 @@ namespace WinFormsApp4
             }
         }
 
+        // Обработка события входа в область перетаскивания
         private void listBox1_DragEnter_1(object sender, DragEventArgs e)
         {
+            // Установка эффекта перетаскивания
             e.Effect = DragDropEffects.Move;
         }
 
@@ -185,13 +197,18 @@ namespace WinFormsApp4
             e.Effect = DragDropEffects.Move;
         }
 
+        // Обработка события окончания перетаскивания
         private void listBox1_DragDrop_1(object sender, DragEventArgs e)
         {
+            // Получение перетаскиваемого элемента
             string item = (string)e.Data.GetData(typeof(string));
             Console.WriteLine(item);
+            // Если элемент перетаскиваемый
             if (e.Data.GetDataPresent(typeof(string)))
             {
+                // Получение целевого списка
                 ListBox target = (ListBox)sender;
+                // Получение исходного списка
                 ListBox source = GetSourceListBox(item);
                 target.Items.Add(item);
                 source.Items.Remove(item);
@@ -239,12 +256,15 @@ namespace WinFormsApp4
             listBox3.Items.Clear();
             label6.Text = "Количество задач: 0";
         }
+
+        //Функция обновления счетчика заадач
         private void UpdateListboxCount(ListBox listbox, Label label)
         {
             int count = listbox.Items.Count;
             label.Text = "Количество задач: " + count.ToString();
         }
 
+        //Обновляет счетчик при изменении listBox 
         private void listBox1_SelectedIndexChanged_1(object sender, EventArgs e)
         {
             UpdateListboxCount(listBox1, label4);
