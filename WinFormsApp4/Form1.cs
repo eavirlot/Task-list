@@ -7,88 +7,126 @@ namespace WinFormsApp4
             InitializeComponent();
         }
 
-        private void Form1_Load_1(object sender, EventArgs e)
+        // Функция проверки залогинен ли пользователь
+        private bool IsUserLoggedIn()
         {
-            // Check if the user is logged in
-            
-                // Show the login form if the user is not logged in
+            // Проверяем, есть ли имя пользователя в настройках приложения
+            return !string.IsNullOrEmpty(Properties.Settings.Default.Username);
+        }
+        private void Form1_Load(object sender, EventArgs e)
+        {
+                // Проверяем, залогинен ли пользователь
 
-                LoginForm loginform = new  LoginForm();
+                // Показываем форму входа, если пользователь не залогинен
+
+                LoginForm loginform = new LoginForm();
                 loginform.ShowDialog();
-            Console.WriteLine("Allowed");
-                
-                // Check if the user has logged in successfully
+                Console.WriteLine("Allowed");
+
+                // Проверяем, выполнил ли пользователь успешный вход
                 if (!IsUserLoggedIn())
                 {
-                    // Close the application if the user has not logged in successfully
+                    // Закрываем приложение, если пользователь не выполнил успешный вход
                     Close();
                     return;
                 }
 
-            string username = Properties.Settings.Default.Username;
-
-            LoadList(listBox1, username + "_todo.txt");
-            LoadList(listBox2, username + "_inprogress.txt");
-            LoadList(listBox3, username + "_done.txt");
+                string username = Properties.Settings.Default.Username;
+                
+                //Загружаем список задач из файла
+                LoadList(listBox1, username + "_todo.txt");
+                LoadList(listBox2, username + "_inprogress.txt");
+                LoadList(listBox3, username + "_done.txt");
+            
         }
-
+        // Функция сохранения списка в файл
         private void SaveList(ListBox listBox, string filename)
         {
+            // Используем using, чтобы автоматически закрыть файл после записи
             using (StreamWriter writer = new StreamWriter(filename))
             {
+                // Цикл по всем элементам в указанном списке
                 foreach (var item in listBox.Items)
                 {
+                    // Запись строки в файл
                     writer.WriteLine(item.ToString());
+                    // Вызов функции UpdateListboxCount для обновления счетчиков элементов в списках
+                    UpdateListboxCount(listBox1, label4);
+                    UpdateListboxCount(listBox2, label5);
+                    UpdateListboxCount(listBox3, label6);
                 }
             }
         }
+        // Функция загрузки списка из файла
         private void LoadList(ListBox listBox, string filename)
         {
+            // Проверка существования файла
             if (!File.Exists(filename))
             {
+                // Создание пустого файла
                 using (FileStream fs = File.Create(filename)) { }
             }
 
+            // Открытие файла для чтения с помощью блока using, чтобы автоматически закрыть файл после чтения
             using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read))
             using (StreamReader reader = new StreamReader(fs))
             {
+                // Очистка списка
                 listBox.Items.Clear();
+                // Считывание построчно
                 string line;
                 while ((line = reader.ReadLine()) != null)
                 {
+                    // Добавление строки в список
                     listBox.Items.Add(line);
+                    // Вызов функции UpdateListboxCount для обновления счетчика элементов в ListBox
+                    UpdateListboxCount(listBox1, label4);
+                    UpdateListboxCount(listBox2, label5);
+                    UpdateListboxCount(listBox3, label6);
                 }
             }
         }
-        private string GetUserFileName()
+        // Функция, возвращающая список, из которого был удален элемент
+        private ListBox GetSourceListBox(string item)
         {
-            // Get the current logged in user's username
+            if (listBox1.Items.Contains(item))
+                return listBox1;
+            else if (listBox2.Items.Contains(item))
+                return listBox2;
+            else if (listBox3.Items.Contains(item))
+                return listBox3;
+            return null;
+        }
+
+        // Функция, возвращающая имя файла пользователя
+        private string GetUserFileName(ListBox listBox)
+        {
             string username = Properties.Settings.Default.Username;
-
-            // Return the file name for the user's to-do list
-            return $"{username}.txt";
+            if (listBox == listBox1)
+                return username + "_todo.txt";
+            else if (listBox == listBox2)
+                return username + "_inprogress.txt";
+            else if (listBox == listBox3)
+                return username + "_done.txt";
+            return "";
         }
 
-        private bool IsUserLoggedIn()
+        // Обработчик события нажатия кнопки "Добавить задачу"
+        private void button1_Click(object sender, EventArgs e)
         {
-            // Check if the user's username is stored in the application settings
-            return !string.IsNullOrEmpty(Properties.Settings.Default.Username);
-        }
-
-        private void button1_Click_1(object sender, EventArgs e)
-        {
-            string newTask = Microsoft.VisualBasic.Interaction.InputBox("Enter a new task", "Add task", "");
+            // Запрос новой задачи от пользователя
+            string newTask = Microsoft.VisualBasic.Interaction.InputBox("Введите имя новой задачи", "Добавить заачу", "");
             listBox1.Items.Add(newTask);
             string filename = Properties.Settings.Default.Username + "_todo.txt";
             SaveList(listBox1, filename);
         }
 
-        private void button2_Click_1(object sender, EventArgs e)
+        private void button2_Click(object sender, EventArgs e)
         {
             if (listBox3.SelectedIndex != -1)
             {
                 listBox3.Items.RemoveAt(listBox3.SelectedIndex);
-                SaveList(listBox3, GetUserFileName());
+                SaveList(listBox3, GetUserFileName(listBox3));
             }
         }
 
@@ -97,117 +135,131 @@ namespace WinFormsApp4
             int index = listBox1.IndexFromPoint(e.X, e.Y);
             if (index != -1)
             {
-                Size dragSize = SystemInformation.DragSize;
-                Console.WriteLine(dragSize);
-                Rectangle dragRect = new Rectangle(new Point(e.X - (dragSize.Width / 2),
-                    e.Y - (dragSize.Height / 2)), dragSize);
-                Console.WriteLine($"{e.X} {e.Y}");
-                if (!dragRect.Contains(e.X, e.Y))
-                {
-                    Console.WriteLine(dragSize+"second");
-                    listBox1.DoDragDrop(listBox1.Items[index], DragDropEffects.Move);
-                }
+                Console.WriteLine("listBox1_MouseDown index ok");
+
+                string selectedItem = (string)listBox1.Items[index];
+              
+                listBox1.DoDragDrop(selectedItem, DragDropEffects.Move);
             }
         }
-        private void listBox2_MouseDown(object sender, MouseEventArgs e)
+
+        private void listBox2_MouseDown_1(object sender, MouseEventArgs e)
         {
             int index = listBox2.IndexFromPoint(e.X, e.Y);
             if (index != -1)
             {
-                Size dragSize = SystemInformation.DragSize;
-                Rectangle dragRect = new Rectangle(new Point(e.X - (dragSize.Width / 2),
-                    e.Y - (dragSize.Height / 2)), dragSize);
-
-                if (!dragRect.Contains(e.X, e.Y))
-                {
-                    listBox2.DoDragDrop(listBox2.Items[index], DragDropEffects.Move);
-                }
+                Console.WriteLine("listBox2_MouseDown index ok");
+                string selectedItem = (string)listBox2.Items[index];
+                listBox2.DoDragDrop(selectedItem, DragDropEffects.Move);
             }
         }
 
-        private void listBox3_MouseDown(object sender, MouseEventArgs e)
+        private void listBox3_MouseDown_1(object sender, MouseEventArgs e)
         {
             int index = listBox3.IndexFromPoint(e.X, e.Y);
             if (index != -1)
             {
-                Size dragSize = SystemInformation.DragSize;
-                Rectangle dragRect = new Rectangle(new Point(e.X - (dragSize.Width / 2),
-                    e.Y - (dragSize.Height / 2)), dragSize);
-
-                if (!dragRect.Contains(e.X, e.Y))
-                {
-                    listBox3.DoDragDrop(listBox1.Items[index], DragDropEffects.Move);
-                }
+                Console.WriteLine("listBox3_MouseDown index ok");
+                string selectedItem = (string)listBox3.Items[index];
+                listBox3.DoDragDrop(selectedItem, DragDropEffects.Move);
             }
         }
 
-        private void listBox1_DragDrop(object sender, DragEventArgs e)
+        private void listBox1_DragEnter_1(object sender, DragEventArgs e)
         {
-
-
-            string task = e.Data.GetData(DataFormats.StringFormat).ToString();
-            listBox1.Items.Add(task);
-            string filename = Properties.Settings.Default.Username + "_todo.txt";
-            SaveList(listBox1, filename);
-            Console.WriteLine("listBox1_DragDrop, savelist action");
+            e.Effect = DragDropEffects.Move;
         }
+
+        private void listBox2_DragEnter_1(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.Move;
+        }
+
+        private void listBox3_DragEnter_1(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.Move;
+        }
+
+        private void listBox1_DragDrop_1(object sender, DragEventArgs e)
+        {
+            string item = (string)e.Data.GetData(typeof(string));
+            Console.WriteLine(item);
+            if (e.Data.GetDataPresent(typeof(string)))
+            {
+                ListBox target = (ListBox)sender;
+                ListBox source = GetSourceListBox(item);
+                target.Items.Add(item);
+                source.Items.Remove(item);
+                SaveList(target, GetUserFileName(target));
+                SaveList(source, GetUserFileName(source));
+            }
+        }
+
         private void listBox2_DragDrop_1(object sender, DragEventArgs e)
         {
-
-
-            string task = e.Data.GetData(DataFormats.StringFormat).ToString();
-            listBox2.Items.Add(task);
-            string filename = Properties.Settings.Default.Username + "_inprogress.txt";
-            SaveList(listBox2, filename);
-            Console.WriteLine("listBox2_DragDrop, savelist action");
-
+            string item = (string)e.Data.GetData(typeof(string));
+            Console.WriteLine(item);
+            if (e.Data.GetDataPresent(typeof(string)))
+            {
+                ListBox target = (ListBox)sender;
+                ListBox source = GetSourceListBox(item);
+                target.Items.Add(item);
+                source.Items.Remove(item);
+                SaveList(target, GetUserFileName(target));
+                SaveList(source, GetUserFileName(source));
+            }
         }
 
         private void listBox3_DragDrop_1(object sender, DragEventArgs e)
         {
-
-
-            string task = e.Data.GetData(DataFormats.StringFormat).ToString();
-            listBox3.Items.Add(task);
-            string filename = Properties.Settings.Default.Username + "_done.txt";
-            SaveList(listBox3, filename);
-
-        }
-
-        private void listBox1_DragOver(object sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(DataFormats.StringFormat))
+            string item = (string)e.Data.GetData(typeof(string));
+            Console.WriteLine(item);
+            if (e.Data.GetDataPresent(typeof(string)))
             {
-                e.Effect = DragDropEffects.Move;
-            }
-            else
-            {
-                e.Effect = DragDropEffects.None;
+                ListBox target = (ListBox)sender;
+                ListBox source = GetSourceListBox(item);
+                target.Items.Add(item);
+                source.Items.Remove(item);
+                SaveList(target, GetUserFileName(target));
+                SaveList(source, GetUserFileName(source));
             }
         }
 
-        private void listBox2_DragOver(object sender, DragEventArgs e)
+        private void button3_Click(object sender, EventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.StringFormat))
-            {
-                e.Effect = DragDropEffects.Move;
-            }
-            else
-            {
-                e.Effect = DragDropEffects.None;
-            }
+            listBox1.Items.Clear();
+            label4.Text = "Количество задач: 0";
+            listBox2.Items.Clear();
+            label5.Text = "Количество задач: 0";
+            listBox3.Items.Clear();
+            label6.Text = "Количество задач: 0";
+        }
+        private void UpdateListboxCount(ListBox listbox, Label label)
+        {
+            int count = listbox.Items.Count;
+            label.Text = "Количество задач: " + count.ToString();
         }
 
-        private void listBox3_DragOver(object sender, DragEventArgs e)
+        private void listBox1_SelectedIndexChanged_1(object sender, EventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.StringFormat))
-            {
-                e.Effect = DragDropEffects.Move;
-            }
-            else
-            {
-                e.Effect = DragDropEffects.None;
-            }
+            UpdateListboxCount(listBox1, label4);
+            UpdateListboxCount(listBox2, label5);
+            UpdateListboxCount(listBox3, label6);
+        }
+
+        private void listBox2_SelectedIndexChanged_1(object sender, EventArgs e)
+        {
+            UpdateListboxCount(listBox1, label4);
+            UpdateListboxCount(listBox2, label5);
+            UpdateListboxCount(listBox3, label6);
+        }
+
+        private void listBox3_SelectedIndexChanged_1(object sender, EventArgs e)
+        {
+            UpdateListboxCount(listBox1, label4);
+            UpdateListboxCount(listBox2, label5);
+            UpdateListboxCount(listBox3, label6);
         }
     }
+    
 }
