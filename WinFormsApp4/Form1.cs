@@ -118,14 +118,19 @@ namespace WinFormsApp4
             string newTask = Microsoft.VisualBasic.Interaction.InputBox("Введите имя новой задачи", "Добавить заачу", "");
             listBox1.Items.Add(newTask);
             string filename = Properties.Settings.Default.Username + "_todo.txt";
+
+            // Сохранение списка
             SaveList(listBox1, filename);
         }
 
+        // Обработчик события нажатия кнопки "Удалить", удаляет только из listBox3
         private void button2_Click(object sender, EventArgs e)
         {
+            // Удаление элемента из ListBox
             if (listBox3.SelectedIndex != -1)
             {
                 listBox3.Items.RemoveAt(listBox3.SelectedIndex);
+                // Сохранение списка
                 SaveList(listBox3, GetUserFileName(listBox3));
             }
         }
